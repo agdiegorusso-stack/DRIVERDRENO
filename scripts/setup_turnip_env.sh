@@ -64,7 +64,7 @@ install_packages() {
     libdrm-dev libxrandr-dev libwayland-dev wayland-protocols
     libexpat1-dev libvulkan-dev libzstd-dev zlib1g-dev
     llvm-dev clang libclang-dev spirv-tools libelf-dev
-    libunwind-dev libglvnd-dev libxml2-utils zstd
+    libunwind-dev libglvnd-dev libxml2-utils zstd zip
     libxcb-keysyms1-dev libxcb-randr0-dev libxcb-util-dev
   )
 

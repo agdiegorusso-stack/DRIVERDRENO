@@ -21,7 +21,7 @@ Questo documento descrive l'architettura proposta per abilitare il supporto alla
 ## Integrazione Turnip
 1. Eseguire `scripts/setup_turnip_env.sh [--mesa-dir PATH --mesa-ref TAG]` per configurare le dipendenze e predisporre il checkout Mesa.
 2. Compilare con `scripts/build_turnip_adreno830.sh [--force-reconfigure --mesa-ref TAG]` che applica automaticamente la patch `patches/mesa-turnip-adreno830.patch`, configura Meson e avvia `ninja`.
-3. Gli artefatti risultanti vengono installati in `<build-dir>/install-root/usr/lib` e copiati (assieme al profilo e al JSON ICD) in `out/adreno830/` con un archivio `turnip-adreno830-*.tar.zst` pronto da distribuire.
+3. Gli artefatti risultanti vengono installati in `<build-dir>/install-root/usr/lib` e copiati (assieme al profilo e al JSON ICD) in `out/adreno830/` con archivi `turnip-adreno830-*.tar.zst` **e** `turnip-adreno830-*.zip` pronti da distribuire sugli emulatori Eden, Citron e Benji-SC.
 4. Configurazione di runtime tramite variabili d'ambiente:
    ```bash
    export TU_DEBUG="noconform"

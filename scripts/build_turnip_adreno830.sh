@@ -109,7 +109,7 @@ prepare_paths() {
 }
 
 check_prerequisites() {
-  for cmd in git meson ninja python3 tar; do
+  for cmd in git meson ninja python3 tar zip; do
     require_command "$cmd"
   done
 
@@ -230,15 +230,20 @@ package_artifacts() {
   [[ "$PACKAGE" == true ]] || return
   local timestamp
   timestamp=$(date +%Y%m%d-%H%M%S)
-  local archive="$REPO_ROOT/out/turnip-adreno830-$timestamp.tar.zst"
+  local base_name="turnip-adreno830-$timestamp"
+  local tar_archive="$REPO_ROOT/out/${base_name}.tar.zst"
+  local zip_archive="$REPO_ROOT/out/${base_name}.zip"
 
-  echo "[INFO] Creazione archivio $archive" >&2
+  echo "[INFO] Creazione archivio $tar_archive" >&2
   if tar --help 2>&1 | grep -q -- '--zstd'; then
-    (cd "$ARTIFACTS_DIR" && tar --zstd -cf "$archive" .)
+    (cd "$ARTIFACTS_DIR" && tar --zstd -cf "$tar_archive" .)
   else
-    (cd "$ARTIFACTS_DIR" && tar -I zstd -cf "$archive" .)
+    (cd "$ARTIFACTS_DIR" && tar -I zstd -cf "$tar_archive" .)
   fi
-  echo "[SUCCESS] Archivio creato: $archive" >&2
+  echo "[INFO] Creazione archivio $zip_archive" >&2
+  (cd "$ARTIFACTS_DIR" && zip -r -9 "$zip_archive" . >/dev/null)
+
+  echo "[SUCCESS] Archivi creati:\n- $tar_archive\n- $zip_archive" >&2
 }
 
 main() {
