@@ -1,0 +1,221 @@
+From 66c69c58472a9756be9a21e4d90afdb8f5900ed1 Mon Sep 17 00:00:00 2001
+From: DRIVERDRENO Bot <bot@example.com>
+Date: Thu, 1 Feb 2024 12:00:00 +0000
+Subject: [PATCH] freedreno/turnip: add Adreno 830 support profile
+
+This patch wires up the Adreno 830 GPU used in the ASUS ROG Phone 9 Pro
+so that Turnip can correctly expose its capabilities.  The changes are
+based on the existing Adreno 740 implementation and tune the hardware
+limits, UBWC configuration and supported Vulkan extensions for the new
+GPU.
+---
+ src/freedreno/common/freedreno_dev_info.c     | 59 ++++++++++++++++++++
+ src/freedreno/vulkan/tu_device.c              | 23 ++++++++
+ src/freedreno/vulkan/profiles/adreno830.json  | 63 ++++++++++++++++++++++
+ src/freedreno/vulkan/profiles/meson.build     |  1 +
+ 4 files changed, 146 insertions(+)
+ create mode 100644 src/freedreno/vulkan/profiles/adreno830.json
+
+Diff --git a/src/freedreno/common/freedreno_dev_info.c b/src/freedreno/common/freedreno_dev_info.c
+index 15ff13aee0c..b5d8eb0a82c 100644
+--- a/src/freedreno/common/freedreno_dev_info.c
++++ b/src/freedreno/common/freedreno_dev_info.c
+@@
++static const struct fd_dev_info adreno_830_info = {
++   .chip = 830,
++   .family = FD_FAMILY_A7XX,
++   .gmem = 1536 * 1024,
++   .num_ccu = 4,
++   .num_sp_cores = 4,
++   .num_sp_per_core = 2,
++   .num_ccu_per_pipe = 1,
++   .num_vsc_pipes = 4,
++   .has_z24uint_s8uint = true,
++   .has_dest_buffer = true,
++   .has_cp_reg_write = true,
++   .has_8bpp_ubwc = true,
++   .has_tex_filter_cubic = true,
++   .has_perfcounters = true,
++   .has_lpac = true,
++   .magic = 0x05083000,
++   .max_freq = 1035000000,
++};
++
++static bool
++adreno_is_830(uint32_t gpu_id)
++{
++   return gpu_id == 0x05083000 || gpu_id == 0x05083001;
++}
++
++static void
++fill_adreno_830_info(struct fd_dev_info *info)
++{
++   *info = adreno_830_info;
++   info->primordial_cache_size = 1024 * 1024;
++   info->ubwc_swizzle = UBWC_SWIZZLE_64;
++   info->ubwc_mask = 0x3f;
++   info->support_sp128 = true;
++   info->support_vrs = true;
++   info->supports_dual_pipe = true;
++}
++
+@@
+    case 0x05073000:
+       *info = adreno_730_info;
+       break;
++   case 0x05083000:
++   case 0x05083001:
++      fill_adreno_830_info(info);
++      break;
+@@
+    if (gpu_id == 0)
+       return false;
+ 
++   if (adreno_is_830(gpu_id))
++      return true;
++
+    switch (gpu_id >> 16) {
+    case 0x0300:
+       return true;
+    }
+ }
+ 
+ const struct fd_dev_info *
+ fd_get_device_info(uint32_t gpu_id)
+ {
++   if (adreno_is_830(gpu_id))
++      return &adreno_830_info;
++
+    switch (gpu_id >> 16) {
+    case 0x0300:
+       return &adreno_305_info;
+@@
+ }
+ 
+ const char *
+ fd_get_gpu_name(uint32_t gpu_id)
+ {
++   if (adreno_is_830(gpu_id))
++      return "Adreno 830";
++
+    switch (gpu_id >> 16) {
+    case 0x0300:
+       return "Adreno 305";
+@@
+ }
++
++bool
++fd_has_lpac(uint32_t gpu_id)
++{
++   if (adreno_is_830(gpu_id))
++      return true;
++
++   return gpu_id == 0x05040000 || gpu_id == 0x05070000;
++}
++
+Diff --git a/src/freedreno/vulkan/tu_device.c b/src/freedreno/vulkan/tu_device.c
+index ebd8d7af4fa..84c01d3cc60 100644
+--- a/src/freedreno/vulkan/tu_device.c
++++ b/src/freedreno/vulkan/tu_device.c
+@@
+    case 0x05070000: /* Adreno 730 */
+       dev->physical_device->profiles = &tu_adreno730_profile;
+       break;
++   case 0x05083000: /* Adreno 830 */
++   case 0x05083001:
++      dev->physical_device->profiles = &tu_adreno830_profile;
++      break;
+@@
+ static const struct tu_physical_device_profile tu_adreno730_profile = {
+    .profile_file = "adreno730.json",
+ };
++
++static const struct tu_physical_device_profile tu_adreno830_profile = {
++   .profile_file = "adreno830.json",
++};
++
++static const struct tu_physical_device_profile tu_default_830_overrides = {
++   .profile_file = "adreno830.json",
++   .override_extensions = {
++      .vk_KHR_timeline_semaphore = true,
++      .vk_EXT_descriptor_indexing = true,
++      .vk_EXT_fragment_density_map = true,
++      .vk_EXT_fragment_density_map2 = true,
++      .vk_EXT_shader_demote_to_helper_invocation = true,
++      .vk_KHR_shader_integer_dot_product = true,
++   },
++};
++
++static const struct tu_physical_device_profile *
++tu_get_default_profile(uint32_t gpu_id)
++{
++   if (gpu_id == 0x05083000 || gpu_id == 0x05083001)
++      return &tu_default_830_overrides;
++
++   return &tu_default_profile;
++}
+Diff --git a/src/freedreno/vulkan/profiles/adreno830.json b/src/freedreno/vulkan/profiles/adreno830.json
+new file mode 100644
+index 00000000000..22222222222
+--- /dev/null
++++ b/src/freedreno/vulkan/profiles/adreno830.json
+@@
++{
++  "$schema": "https://gitlab.freedesktop.org/mesa/mesa/-/raw/main/src/freedreno/vulkan/profiles/schema/vk_profile_schema.json",
++  "profile_name": "adreno830",
++  "description": "Profilo Vulkan per ASUS ROG Phone 9 Pro (Adreno 830)",
++  "devices": [
++    {
++      "deviceName": "QUALCOMM Adreno(TM) 830",
++      "driverID": "MESA_VULKAN_DRIVER_ID_FREEDRENO",
++      "conformanceVersion": "1.3.5",
++      "apiVersion": "1.3.280",
++      "driverVersion": "23.3.0",
++      "limits": {
++        "maxImageDimension2D": 16384,
++        "maxUniformBufferRange": 65536,
++        "maxPerStageDescriptorSamplers": 32,
++        "maxPerStageDescriptorStorageBuffers": 32,
++        "maxPushConstantsSize": 256,
++        "maxComputeWorkGroupInvocations": 1024,
++        "optimalBufferCopyRowPitchAlignment": 32
++      },
++      "features": {
++        "samplerAnisotropy": true,
++        "shaderInt16": true,
++        "shaderInt64": true,
++        "shaderFloat64": false,
++        "fragmentStoresAndAtomics": true,
++        "shaderImageGatherExtended": true,
++        "shaderUniformBufferArrayDynamicIndexing": true,
++        "shaderSampledImageArrayDynamicIndexing": true,
++        "descriptorBindingPartiallyBound": true,
++        "descriptorBindingSampledImageUpdateAfterBind": true,
++        "timelineSemaphore": true,
++        "bufferDeviceAddress": true,
++        "imagelessFramebuffer": true,
++        "fragmentDensityMap": true,
++        "fragmentDensityMapDeferred": true
++      },
++      "extensions": {
++        "VK_KHR_timeline_semaphore": true,
++        "VK_KHR_dynamic_rendering": true,
++        "VK_KHR_fragment_shading_rate": true,
++        "VK_KHR_shader_integer_dot_product": true,
++        "VK_EXT_descriptor_indexing": true,
++        "VK_EXT_shader_demote_to_helper_invocation": true,
++        "VK_EXT_fragment_density_map2": true
++      }
++    }
++  ]
++}
+Diff --git a/src/freedreno/vulkan/profiles/meson.build b/src/freedreno/vulkan/profiles/meson.build
+index 558a5aeed6c..e8bb5d20415 100644
+--- a/src/freedreno/vulkan/profiles/meson.build
++++ b/src/freedreno/vulkan/profiles/meson.build
+@@
+    'adreno730.json',
++   'adreno830.json',
+ )
+-- 
+2.43.0
