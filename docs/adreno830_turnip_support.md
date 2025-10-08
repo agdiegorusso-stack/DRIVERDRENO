@@ -19,9 +19,9 @@ Questo documento descrive l'architettura proposta per abilitare il supporto alla
 | Driver proprietario di riferimento | Qualcomm v1.5 |
 
 ## Integrazione Turnip
-1. Eseguire `scripts/setup_turnip_env.sh` per configurare dipendenze e clonare Mesa.
-2. Applicare la patch `patches/mesa-turnip-adreno830.patch` durante il build (`scripts/build_turnip_adreno830.sh`).
-3. Associare il profilo `config/device_profiles/adreno_830.yaml` durante la configurazione Meson.
+1. Eseguire `scripts/setup_turnip_env.sh [--mesa-dir PATH --mesa-ref TAG]` per configurare le dipendenze e predisporre il checkout Mesa.
+2. Compilare con `scripts/build_turnip_adreno830.sh [--force-reconfigure --mesa-ref TAG]` che applica automaticamente la patch `patches/mesa-turnip-adreno830.patch`, configura Meson e avvia `ninja`.
+3. Gli artefatti risultanti vengono installati in `<build-dir>/install-root/usr/lib` e copiati (assieme al profilo e al JSON ICD) in `out/adreno830/` con un archivio `turnip-adreno830-*.tar.zst` pronto da distribuire.
 4. Configurazione di runtime tramite variabili d'ambiente:
    ```bash
    export TU_DEBUG="noconform"
@@ -29,7 +29,7 @@ Questo documento descrive l'architettura proposta per abilitare il supporto alla
    export TU_AFBC=1
    export MESA_VK_WSI_PRESENT_MODE="mailbox"
    ```
-4. Distribuzione delle librerie compilate in `/vendor/lib64/hw/` sul dispositivo.
+5. Distribuzione delle librerie compilate in `/vendor/lib64/hw/` sul dispositivo.
 
 ## Feature Flag chiave
 - **A6xx_UBWC**: abilita la compressione UBWC per ridurre il bandwidth.
@@ -54,14 +54,14 @@ cd "$MESA_SRC_DIR"
 git apply /percorso/DRIVERDRENO/patches/mesa-turnip-adreno830.patch
 ```
 
-È possibile rimuovere la patch eseguendo `git checkout -- .` nel repository Mesa.
+Per annullare la patch utilizzare `git apply -R /percorso/DRIVERDRENO/patches/mesa-turnip-adreno830.patch` oppure ripristinare il checkout con `git reset --hard`.
 
 ## Testing suggerito
 | Emulatore | Test | Comando consigliato |
 |-----------|------|---------------------|
-| Eden | `eden --vk-device-info` | Verifica caricamento driver.
-| Citron | `citron --renderer=turnip --benchmark mario` | Stress test grafico.
-| Benji-SC | `benji-sc --validate --vk` | Validazione API Vulkan.
+| Eden | `eden --vk-device-info` | Verifica caricamento driver e timeline semaphore. |
+| Citron | `citron --renderer=turnip --benchmark mario` | Stress test grafico con Variable Rate Shading. |
+| Benji-SC | `benji-sc --validate --vk` | Validazione API Vulkan e descriptor indexing. |
 
 ## Roadmap
 1. **Fase 1** – Compilazione iniziale e smoke test (1 giorno).
@@ -69,9 +69,9 @@ git apply /percorso/DRIVERDRENO/patches/mesa-turnip-adreno830.patch
 3. **Fase 3** – Validazione completa su dispositivi reali (5 giorni).
 
 ## Troubleshooting
-- **FPS instabili**: assicurarsi che il governor della GPU sia impostato su "performance".
-- **Crash in Citron**: controllare il supporto `VK_EXT_descriptor_indexing` nella build.
-- **Lag audio/video**: sincronizzare i clock degli emulatori con il profilo `ROG-Performance`.
+- **FPS instabili**: assicurarsi che il governor della GPU sia impostato su "performance" e che `TU_AFBC=1` sia esportato.
+- **Crash in Citron**: controllare il supporto `VK_EXT_descriptor_indexing` nella build (visibile con `vulkaninfo`).
+- **Lag audio/video**: sincronizzare i clock degli emulatori con il profilo `ROG-Performance` e verificare la latenza USB.
 
 ## Conclusioni
 Questa documentazione fornisce i riferimenti necessari per attivare il supporto Adreno 830 in Turnip e garantire la compatibilità con gli emulatori target. Ulteriori ottimizzazioni possono essere apportate dopo i primi cicli di test su hardware reale.
