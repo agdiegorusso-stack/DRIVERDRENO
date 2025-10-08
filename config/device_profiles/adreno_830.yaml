@@ -1,0 +1,59 @@
+# Profilo dispositivo per Adreno 830 - ASUS ROG Phone 9 Pro
+metadata:
+  gpu_name: "Adreno 830"
+  codename: "sage"
+  manufacturer: "Qualcomm"
+  device: "ASUS ROG Phone 9 Pro"
+  maintainer: "Turnip Community"
+
+identifiers:
+  gpu_id: 830
+  chip_id: 0x070830FF
+  family: "a7xx"
+  platform: "android"
+
+versions:
+  driver_version: "24.1.0"
+  firmware:
+    gmu: "v1.2.3"
+    zap: "v1.0.1"
+    qdss: "v0.9.4"
+
+features:
+  robust_buffer_access: true
+  timeline_semaphore: true
+  descriptor_indexing: true
+  sparse_binding: true
+  variable_rate_shading:
+    tier: 2
+    texture_based: true
+  ubwc:
+    enabled: true
+    version: 4
+  astc_10bit: true
+  fp16: true
+  int8: true
+
+limits:
+  max_threads_per_block: 1024
+  max_shared_memory: 128KB
+  max_bindless_samplers: 2048
+  max_push_constants: 256
+  max_descriptor_sets: 8
+  max_image_dimension_2d: 16384
+  max_sampler_anisotropy: 16
+
+emulator_overrides:
+  eden:
+    prefer_mailbox_present: true
+    enforce_timeline_semaphore: true
+  citron:
+    enable_vrs: true
+    vk_sync_mode: "relaxed"
+  benji_sc:
+    validation_layers: ["VK_LAYER_KHRONOS_validation"]
+    force_robust_buffer: true
+
+notes:
+  - "Questo profilo è pensato per build personalizzate di Mesa Turnip."
+  - "Verificare sempre la compatibilità con la versione del kernel in uso."
