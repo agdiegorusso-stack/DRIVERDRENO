@@ -12,7 +12,7 @@ Repository per la gestione di profili e build script dedicati al driver Turnip s
 ## Utilizzo rapido
 1. Eseguire `scripts/setup_turnip_env.sh` per installare le dipendenze e clonare Mesa (supporta le opzioni `--mesa-ref` e `--mesa-dir`).
 2. Esportare `MESA_SRC_DIR` se si utilizza un percorso differente da `~/mesa`.
-3. Avviare `scripts/build_turnip_adreno830.sh` per applicare la patch, configurare Meson e compilare il driver. Al termine troverai:
+3. Avviare `scripts/build_turnip_adreno830.sh` per applicare la patch, configurare Meson e compilare il driver. Gli artefatti **non** sono versionati in questo repository: verranno creati localmente solo dopo l'esecuzione dello script e rimarranno nella macchina in cui è stata effettuata la compilazione. Al termine troverai:
    - l'albero di installazione in `<build-dir>/install-root` pronto per il push su dispositivo;
    - archivi `.tar.zst` e `.zip` con driver e profili nominati `turnip-adreno830-YYYYMMDD-HHMMSS.*` in `out/`, insieme alla cartella di staging `out/adreno830/` che contiene le librerie e l'ICD generati.
 4. Copiare le librerie `libvulkan_freedreno*.so` e il JSON ICD sul dispositivo target seguendo le note in `docs/adreno830_turnip_support.md`.
