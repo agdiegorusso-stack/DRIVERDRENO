@@ -37,6 +37,27 @@ Dopo una build completata con successo gli artefatti principali sono disponibili
 - `out/turnip-adreno830-YYYYMMDD-HHMMSS.tar.zst` e `out/turnip-adreno830-YYYYMMDD-HHMMSS.zip`: archivi pronti per il deploy su emulatori o per la distribuzione, generati localmente dopo la build.
 Il timestamp nel nome permette di individuare rapidamente l'ultima build prodotta; è possibile elencare il più recente con `ls -t out/turnip-adreno830-*.zip | head -n1` quando sono stati generati artefatti sulla macchina corrente.
 
+### Esecuzione passo-passo (esempio Debian/Ubuntu)
+```bash
+cd /percorso/DRIVERDRENO
+
+# Preparazione ambiente e checkout Mesa
+./scripts/setup_turnip_env.sh --mesa-dir "$HOME/mesa"
+
+# Puntare lo script di build al checkout (se diverso da ~/mesa, modifica il percorso)
+export MESA_SRC_DIR="$HOME/mesa"
+
+# Compilazione driver e creazione degli archivi
+./scripts/build_turnip_adreno830.sh --force-reconfigure
+
+# Ottenere il nome dello ZIP appena creato
+latest_zip=$(ls -t out/turnip-adreno830-*.zip | head -n1)
+echo "Artefatto: $latest_zip"
+
+# Copia sul dispositivo (esempio via adb)
+adb push "$latest_zip" /sdcard/
+```
+
 ## Feature Flag chiave
 - **A6xx_UBWC**: abilita la compressione UBWC per ridurre il bandwidth.
 - **A7xx_ROBUSTNESS**: estende i controlli di robustezza necessari per Benji-SC.
