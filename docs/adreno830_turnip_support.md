@@ -19,9 +19,10 @@ Questo documento descrive l'architettura proposta per abilitare il supporto alla
 | Driver proprietario di riferimento | Qualcomm v1.5 |
 
 ## Integrazione Turnip
-1. Aggiunta del profilo nel file `config/device_profiles/adreno_830.yaml`.
-2. Aggiornamento del build script (`scripts/build_turnip_adreno830.sh`) per includere le patch richieste.
-3. Configurazione di runtime tramite variabili d'ambiente:
+1. Eseguire `scripts/setup_turnip_env.sh` per configurare dipendenze e clonare Mesa.
+2. Applicare la patch `patches/mesa-turnip-adreno830.patch` durante il build (`scripts/build_turnip_adreno830.sh`).
+3. Associare il profilo `config/device_profiles/adreno_830.yaml` durante la configurazione Meson.
+4. Configurazione di runtime tramite variabili d'ambiente:
    ```bash
    export TU_DEBUG="noconform"
    export TU_ANISO=16
@@ -35,6 +36,25 @@ Questo documento descrive l'architettura proposta per abilitare il supporto alla
 - **A7xx_ROBUSTNESS**: estende i controlli di robustezza necessari per Benji-SC.
 - **VRS Tier 2**: fondamentale per l'emulatore Citron.
 - **Timeline Semaphore**: richiesto da Eden.
+- **Descriptor Indexing**: necessario per Citron e Benji-SC.
+- **Fragment Density Map**: ottimizza la gestione dello scaling su Eden.
+
+## Patch Mesa/Turnip
+
+La patch `patches/mesa-turnip-adreno830.patch` introduce:
+
+- Un nuovo profilo hardware in `freedreno_dev_info` con i limiti della GPU Adreno 830.
+- La definizione del profilo Vulkan `adreno830.json` consumato da Turnip.
+- L'instradamento automatico del profilo nel codice `tu_device.c`.
+
+Applicazione manuale:
+
+```bash
+cd "$MESA_SRC_DIR"
+git apply /percorso/DRIVERDRENO/patches/mesa-turnip-adreno830.patch
+```
+
+È possibile rimuovere la patch eseguendo `git checkout -- .` nel repository Mesa.
 
 ## Testing suggerito
 | Emulatore | Test | Comando consigliato |

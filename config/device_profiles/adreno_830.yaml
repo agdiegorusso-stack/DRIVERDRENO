@@ -7,8 +7,8 @@ metadata:
   maintainer: "Turnip Community"
 
 identifiers:
-  gpu_id: 830
-  chip_id: 0x070830FF
+  gpu_id: 0x05083000
+  chip_id: 0x05083001
   family: "a7xx"
   platform: "android"
 
@@ -42,6 +42,8 @@ limits:
   max_descriptor_sets: 8
   max_image_dimension_2d: 16384
   max_sampler_anisotropy: 16
+  gmem_size: 1536KB
+  cache_l2: 1024KB
 
 emulator_overrides:
   eden:
@@ -53,6 +55,7 @@ emulator_overrides:
   benji_sc:
     validation_layers: ["VK_LAYER_KHRONOS_validation"]
     force_robust_buffer: true
+    enforce_descriptor_indexing: true
 
 notes:
   - "Questo profilo è pensato per build personalizzate di Mesa Turnip."
